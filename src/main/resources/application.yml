@@ -1,0 +1,13 @@
+spring:
+  profiles:
+    active: true
+  application:
+    name: jenkins-collector-client
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: guest
+    password: guest
+  jpa:
+    database: MYSQL
+

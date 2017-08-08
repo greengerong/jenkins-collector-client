@@ -1,6 +1,6 @@
 spring:
   profiles:
-    active: true
+    active: dev
   application:
     name: jenkins-collector-client
   rabbitmq:
@@ -10,4 +10,9 @@ spring:
     password: guest
   jpa:
     database: MYSQL
-
+application:
+  mq:
+    concurrentConsumers: 3
+    maxConcurrentConsumers: 10
+server:
+  port: 9090

@@ -6,9 +6,9 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
 @EnableRabbit
-public class JenkinsCollectorClientApplication {
+public class Application {
 
     public static void main(String[] args) {
-        SpringApplication.run(JenkinsCollectorClientApplication.class, args);
+        SpringApplication.run(Application.class, args);
     }
 }

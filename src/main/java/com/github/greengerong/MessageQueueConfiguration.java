@@ -1,14 +1,12 @@
 package com.github.greengerong;
 
-import org.springframework.amqp.core.Binding;
-import org.springframework.amqp.core.BindingBuilder;
-import org.springframework.amqp.core.Queue;
-import org.springframework.amqp.core.TopicExchange;
 import org.springframework.amqp.rabbit.annotation.RabbitListenerConfigurer;
 import org.springframework.amqp.rabbit.config.SimpleRabbitListenerContainerFactory;
 import org.springframework.amqp.rabbit.connection.ConnectionFactory;
 import org.springframework.amqp.rabbit.listener.RabbitListenerEndpointRegistrar;
+import org.springframework.amqp.support.converter.Jackson2JsonMessageConverter;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.messaging.converter.MappingJackson2MessageConverter;
@@ -23,34 +21,29 @@ import org.springframework.messaging.handler.annotation.support.DefaultMessageHa
  *                                        *
  ******************************************/
 @Configuration
+@EnableConfigurationProperties(MQSetting.class)
 public class MessageQueueConfiguration implements RabbitListenerConfigurer {
 
-    final static String QUEUE_NAME = "spring-boot";
+    public final static String QUEUE = "mq-test";
+    public final static String EXCHANGE = "com.github.greengerong.exchange";
+    public final static String SENDER_ROUTE_KEY = "com.github.greengerong.event";
+    public final static String LISTENER_ROUTE_KEY = "com.github.greengerong.event";
+
+    private final MQSetting mqSetting;
+    private final ConnectionFactory connectionFactory;
 
     @Autowired
-    private ConnectionFactory connectionFactory;
-
-    @Bean
-    Queue queue() {
-        return new Queue(QUEUE_NAME, true);
-    }
-
-    @Bean
-    TopicExchange exchange() {
-        return new TopicExchange("spring-boot-exchange");
-    }
-
-    @Bean
-    Binding binding(Queue queue, TopicExchange exchange) {
-        return BindingBuilder.bind(queue).to(exchange).with(QUEUE_NAME);
+    public MessageQueueConfiguration(MQSetting mqSetting, ConnectionFactory connectionFactory) {
+        this.mqSetting = mqSetting;
+        this.connectionFactory = connectionFactory;
     }
 
     @Bean
     public SimpleRabbitListenerContainerFactory rabbitListenerContainerFactory() {
         SimpleRabbitListenerContainerFactory factory = new SimpleRabbitListenerContainerFactory();
         factory.setConnectionFactory(connectionFactory);
-        factory.setConcurrentConsumers(3);
-        factory.setMaxConcurrentConsumers(10);
+        factory.setConcurrentConsumers(mqSetting.getConcurrentConsumers());
+        factory.setMaxConcurrentConsumers(mqSetting.getMaxConcurrentConsumers());
         return factory;
     }
 
@@ -58,13 +51,18 @@ public class MessageQueueConfiguration implements RabbitListenerConfigurer {
     @Bean
     public DefaultMessageHandlerMethodFactory myHandlerMethodFactory() {
         DefaultMessageHandlerMethodFactory factory = new DefaultMessageHandlerMethodFactory();
-        factory.setMessageConverter(getMessageConverter());
+        factory.setMessageConverter(getHandlerMessageConverter());
         return factory;
     }
 
     @Bean
-    public MappingJackson2MessageConverter getMessageConverter() {
+    public MappingJackson2MessageConverter getHandlerMessageConverter() {
         return new MappingJackson2MessageConverter();
+    }
+
+    @Bean
+    public Jackson2JsonMessageConverter getTemplateMessageConverter() {
+        return new Jackson2JsonMessageConverter();
     }
 
     @Override
